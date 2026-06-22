@@ -1,0 +1,5 @@
+# Folders
+target/
+
+# Individual files
+.env
