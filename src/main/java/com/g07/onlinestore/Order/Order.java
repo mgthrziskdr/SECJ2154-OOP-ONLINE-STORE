@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.Random;
 
 public class Order {
+
   // Attributes
   private String orderId;
   private String orderDate;
@@ -17,16 +18,12 @@ public class Order {
   // Generate random order ID
   public static String createRandomOrder() {
     Random random = new Random();
-
-    String orderTempId = "ORD" + (1000 + random.nextInt(9000));
-
-    return orderTempId;
+    return "ORD" + (1000 + random.nextInt(9000));
   }
 
   // Generate random order date
   public static String createRandomDate() {
-    LocalDate orderDate = LocalDate.now();
-    return orderDate.toString();
+    return LocalDate.now().toString();
   }
 
   // Constructor Order
@@ -38,12 +35,18 @@ public class Order {
     this.totalAmount = 0.0;
   }
 
+  // ================================
   // Add product into order
+  // ================================
   public void addItem(Product product) {
-    items.add(product);
+    if (product != null) {
+      items.add(product);
+    }
   }
 
+  // ================================
   // Calculate total price
+  // ================================
   public double calculateTotal() {
     totalAmount = 0;
 
@@ -54,15 +57,41 @@ public class Order {
     return totalAmount;
   }
 
-  // Order details
-  public void getOrderDetails() {
-    System.out.println("Order ID: " + orderId);
-    System.out.println("Date: " + orderDate);
-    System.out.println("Status: " + status);
-    System.out.println("Total: RM " + calculateTotal());
+  // ================================
+  // UI-FRIENDLY ORDER SUMMARY
+  // (REPLACES System.out.println)
+  // ================================
+  public String getOrderSummary() {
+
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("=== ORDER DETAILS ===\n");
+    sb.append("Order ID: ").append(orderId).append("\n");
+    sb.append("Date: ").append(orderDate).append("\n");
+    sb.append("Status: ").append(status).append("\n\n");
+
+    sb.append("Items:\n");
+
+    if (items.isEmpty()) {
+      sb.append("No items in order\n");
+    } else {
+      for (Product product : items) {
+        sb.append("- ")
+            .append(product.getName())
+            .append(" (RM ")
+            .append(product.getPrice())
+            .append(")\n");
+      }
+    }
+
+    sb.append("\nTotal: RM ").append(calculateTotal());
+
+    return sb.toString();
   }
 
-  // Getter methods
+  // ================================
+  // GETTERS
+  // ================================
   public String getOrderId() {
     return orderId;
   }
@@ -83,8 +112,12 @@ public class Order {
     return totalAmount;
   }
 
-  // Update status
+  // ================================
+  // UPDATE STATUS
+  // ================================
   public void setStatus(String status) {
-    this.status = status;
+    if (status != null) {
+      this.status = status;
+    }
   }
 }

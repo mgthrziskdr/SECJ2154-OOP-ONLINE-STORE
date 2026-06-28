@@ -1,6 +1,7 @@
 package com.g07.onlinestore.Product;
 
 public abstract class Product {
+
   // Attributes
   private String productId;
   private String name;
@@ -9,22 +10,29 @@ public abstract class Product {
 
   // Constructor Product
   public Product(
-    String productId,
-    String name,
-    double price,
-    int stockQuantity
-  ) {
+      String productId,
+      String name,
+      double price,
+      int stockQuantity) {
     this.productId = productId;
     this.name = name;
     this.price = price;
     this.stockQuantity = stockQuantity;
   }
 
-  // Abstract methods
+  // ================================
+  // ABSTRACT METHODS
+  // ================================
   public abstract double calculatePrice();
-  public abstract void getProductDetails();
 
-  // Getter methods
+  // NOTE:
+  // Replaced void print-style method with String-based method
+  // (better for JOptionPane + UI + MVC design)
+  public abstract String getProductDetails();
+
+  // ================================
+  // GETTERS
+  // ================================
   public String getProductId() {
     return productId;
   }
@@ -41,9 +49,29 @@ public abstract class Product {
     return stockQuantity;
   }
 
-  // Stock update method
+  // ================================
+  // STOCK UPDATE METHOD
+  // ================================
   public void reduceStock(int quantity) {
-    stockQuantity -= quantity;
+    if (quantity > 0 && quantity <= stockQuantity) {
+      stockQuantity -= quantity;
+    }
   }
 
+  // Optional (GOOD FOR UI + DEBUG + UML)
+  public void increaseStock(int quantity) {
+    if (quantity > 0) {
+      stockQuantity += quantity;
+    }
+  }
+
+  // ================================
+  // UI FRIENDLY SUMMARY (OPTIONAL BUT USEFUL)
+  // ================================
+  public String getBasicInfo() {
+    return "ID: " + productId +
+        "\nName: " + name +
+        "\nPrice: RM " + price +
+        "\nStock: " + stockQuantity;
+  }
 }
