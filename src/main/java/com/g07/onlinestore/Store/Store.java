@@ -7,8 +7,11 @@ import com.g07.onlinestore.Person.Customer;
 import com.g07.onlinestore.Person.Staff.Staff;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class Store {
+
   private String storeName;
 
   // Temporary storage
@@ -21,6 +24,7 @@ public class Store {
   // Constructor Store
   public Store(String storeName) {
     this.storeName = storeName;
+
     products = new ArrayList<>();
     orders = new ArrayList<>();
     customers = new ArrayList<>();
@@ -33,48 +37,80 @@ public class Store {
     return storeName;
   }
 
+  // ================================
   // Product methods
+  // ================================
   public void addProduct(Product product) {
-    products.add(product);
+    if (product != null) {
+      products.add(product);
+    }
   }
 
-  public ArrayList<Product> getProducts() {
-    return products;
+  public void removeProduct(Product product) {
+    products.remove(product);
   }
 
+  public void updateProduct(Product oldProduct, Product newProduct) {
+    int index = products.indexOf(oldProduct);
+
+    if(index != -1) {
+      products.set(index, newProduct);
+    }
+  }
+
+  public List<Product> getProducts() {
+    return Collections.unmodifiableList(products);
+  }
+
+  // ================================
   // Order methods
+  // ================================
   public void addOrder(Order order) {
-    orders.add(order);
+    if (order != null) {
+      orders.add(order);
+    }
   }
 
-  public ArrayList<Order> getOrders() {
-    return orders;
+  public List<Order> getOrders() {
+    return Collections.unmodifiableList(orders);
   }
 
+  // ================================
   // Customer methods
+  // ================================
   public void addCustomer(Customer customer) {
-    customers.add(customer);
+    if (customer != null) {
+      customers.add(customer);
+    }
   }
 
-  public ArrayList<Customer> getCustomers() {
-    return customers;
+  public List<Customer> getCustomers() {
+    return Collections.unmodifiableList(customers);
   }
 
+  // ================================
   // Staff methods
+  // ================================
   public void addStaff(Staff staff) {
-    staffList.add(staff);
+    if (staff != null) {
+      staffList.add(staff);
+    }
   }
 
-  public ArrayList<Staff> getStaffList() {
-    return staffList;
+  public List<Staff> getStaffList() {
+    return Collections.unmodifiableList(staffList);
   }
 
+  // ================================
   // Payment methods
+  // ================================
   public void addPayment(Payment payment) {
-    payments.add(payment);
+    if (payment != null) {
+      payments.add(payment);
+    }
   }
 
-  public ArrayList<Payment> getPayments() {
-    return payments;
+  public List<Payment> getPayments() {
+    return Collections.unmodifiableList(payments);
   }
 }

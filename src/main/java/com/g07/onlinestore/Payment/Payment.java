@@ -1,19 +1,29 @@
 package com.g07.onlinestore.Payment;
 
+import javax.swing.JOptionPane;
+
 public class Payment {
+
   // Attributes
   private String paymentId;
-  private String paymentMethod;
+  private PaymentMethod paymentMethod;
   private double amount;
   private double transactionFee;
   private String status;
+  private String selectedBank;
+
+  // ENUM (inside same file)
+  public enum PaymentMethod {
+    CREDIT_CARD,
+    FPX_BANKING,
+    CASH_ON_DELIVERY
+  }
 
   // Constructor Payment
   public Payment(
-    String paymentId,
-    String paymentMethod,
-    double amount
-  ) {
+      String paymentId,
+      PaymentMethod paymentMethod,
+      double amount) {
     this.paymentId = paymentId;
     this.paymentMethod = paymentMethod;
     this.amount = amount;
@@ -29,43 +39,56 @@ public class Payment {
         throw new IllegalArgumentException("Payment amount must be greater than 0");
       }
 
-      switch (paymentMethod.toLowerCase()) {
-        case "credit/debit card":
-          transactionFee = amount * 0.0;
-          break;
+      PaymentMethod[] options = PaymentMethod.values();
 
-        case "fpx banking":
-          transactionFee = amount * 0.0;
-          break;
+      PaymentMethod selectedMethod = (PaymentMethod) JOptionPane.showInputDialog(
+          null,
+          "Select Payment Method",
+          "Payment",
+          JOptionPane.QUESTION_MESSAGE,
+          null,
+          options,
+          options[0]);
 
-        case "cash on delivery":
-          transactionFee = 0;
-          break;
-
-        default:
-          throw new IllegalArgumentException("Invalid payment method");
+      if (selectedMethod == null) {
+        status = "Failed";
+        return;
       }
 
-      status = "Successful";
+      this.paymentMethod = selectedMethod;
 
-    } catch (IllegalArgumentException e) {
-      status = "Failed";
-      System.out.println("[ERROR] " + e.getMessage());
+      switch (paymentMethod) {
+
+        case CREDIT_CARD:
+          selectBankUI();
+          JOptionPane.showMessageDialog(null, "[PROCESS] Processing Credit/Debit Card Payment...");
+          transactionFee = 0;
+          status = "Successful";
+          break;
+
+        case FPX_BANKING:
+          selectBankUI();
+          JOptionPane.showMessageDialog(null, "[PROCESS] Processing FPX Banking Payment...");
+          transactionFee = 0;
+          status = "Successful";
+          break;
+
+        case CASH_ON_DELIVERY:
+          JOptionPane.showMessageDialog(null, "[PROCESS] Sharing COD Request with Store...");
+          transactionFee = 0;
+          status = "Successful";
+          break;
+      }
 
     } catch (Exception e) {
       status = "Failed";
-      System.out.println("[ERROR] Payment processing failed");
+      JOptionPane.showMessageDialog(null, "[ERROR] " + e.getMessage());
     }
   }
 
   // Calculate final amount
   public double getFinalAmount() {
-    try {
-      return amount + transactionFee;
-    } catch (Exception e) {
-      System.out.println("[ERROR] Cannot calculate payment amount");
-      return 0;
-    }
+    return amount + transactionFee;
   }
 
   // Getters
@@ -73,7 +96,7 @@ public class Payment {
     return paymentId;
   }
 
-  public String getPaymentMethod() {
+  public PaymentMethod getPaymentMethod() {
     return paymentMethod;
   }
 
@@ -90,115 +113,34 @@ public class Payment {
   }
 
   // Payment details
-  public void printPaymentDetails() {
-    try {
-      System.out.println("Payment ID: " + paymentId);
-      System.out.println("Method: " + paymentMethod);
-      System.out.println("Amount: RM " + amount);
-      System.out.println("Transaction Fee: RM " + transactionFee);
-      System.out.println("Final Amount: RM " + getFinalAmount());
-      System.out.println("Status: " + status);
-    } catch (Exception e) {
-      System.out.println("[ERROR] Unable to display payment details");
-    }
+  public void showPaymentDetails() {
+    JOptionPane.showMessageDialog(null,
+        "Payment ID: " + paymentId + "\n"
+            + "Method: " + paymentMethod + "\n"
+            + "Bank: " + selectedBank + "\n"
+            + "Amount: RM " + amount + "\n"
+            + "Transaction Fee: RM " + transactionFee + "\n"
+            + "Final Amount: RM " + getFinalAmount() + "\n"
+            + "Status: " + status);
+  }
+
+  // Bank selection
+  private void selectBankUI() {
+
+    String[] banks = {
+        "Maybank", "CIMB Bank", "Public Bank", "RHB Bank",
+        "Hong Leong Bank", "AmBank", "Bank Islam",
+        "Bank Rakyat", "Alliance Bank", "OCBC Bank",
+        "UOB Malaysia", "HSBC Malaysia"
+    };
+
+    selectedBank = (String) JOptionPane.showInputDialog(
+        null,
+        "Select Bank",
+        "Bank Selection",
+        JOptionPane.QUESTION_MESSAGE,
+        null,
+        banks,
+        banks[0]);
   }
 }
-
-// package com.g07.onlinestore.Payment;
-
-// import java.util.Scanner;
-
-// public class Payment {
-// private int paymentMethod;
-// private int bankOption;
-// private double transactionFee;
-
-// Scanner input = new Scanner(System.in);
-
-// public Payment(double transaction_fee) {
-// this.transactionFee = transaction_fee;
-// }
-
-// public void bankSelection() {
-// String[] banks = {
-// "Maybank",
-// "CIMB Bank",
-// "Public Bank",
-// "RHB Bank",
-// "Hong Leong Bank",
-// "AmBank",
-// "Bank Islam",
-// "Bank Rakyat",
-// "Alliance Bank",
-// "OCBC Bank",
-// "UOB Malaysia",
-// "HSBC Malaysia"
-// };
-
-// System.out.println("\n===========================");
-// System.out.println("Select a Bank:");
-// System.out.println("===========================");
-// for (int i = 0; i < banks.length; i++) {
-// System.out.println((i + 1) + ". " + banks[i]);
-// }
-
-// System.out.print("\nSelection: ");
-// bankOption = input.nextInt();
-// }
-
-// private void returnPaymentRespond(double transaction_fee) {
-// if (transaction_fee <= 0) {
-// System.out.println("[WARNING] Balance Insuffient!");
-// } else {
-// System.out.println("[SUCCESS] Payment Successful!");
-// }
-// }
-
-// public void processPayment() {
-// String[] payMtd = {
-// "Credit/Debit Card",
-// "FPX Banking",
-// "Cash on Delivery (COD)"
-// };
-
-// System.out.println("===========================");
-// System.out.println("Select Payment Method:");
-// System.out.println("===========================");
-// for (int i = 0; i < payMtd.length; i++) {
-// System.out.println((i + 1) + ". " + payMtd[i]);
-// }
-
-// System.out.print("\nSelection: ");
-// paymentMethod = input.nextInt();
-
-// switch (paymentMethod) {
-// // Credit/Debit Card
-// case 1:
-// bankSelection();
-// System.out.println("[PROCESS] Processing Credit/Debit Card Payment...");
-// transactionFee += (transactionFee * 0);
-// returnPaymentRespond(transactionFee);
-// break;
-
-// // FPX Banking
-// case 2:
-// bankSelection();
-// System.out.println("[PROCESS] Processing FPX Banking Payment...");
-// transactionFee += (transactionFee * 0);
-// returnPaymentRespond(transactionFee);
-// break;
-
-// // Cash on Delivery (COD)
-// case 3:
-// System.out.println("[PROCESS] Sharing COD Request with Store...");
-// break;
-
-// default:
-// break;
-// }
-// }
-
-// public void printPaymentDetails() {
-
-// }
-// }

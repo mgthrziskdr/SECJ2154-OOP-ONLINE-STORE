@@ -1,48 +1,50 @@
 package com.g07.onlinestore.Product;
 
 public class Clothing extends Product {
+
   // Attributes
   private String size;
   private String material;
 
   // Constructor Clothing
   public Clothing(
-    String productId,
-    String name,
-    double price,
-    int stockQuantity,
-    String size,
-    String material
-  ) {
-    super(
-      productId,
-      name,
-      price,
-      stockQuantity
-    );
+      String productId,
+      String name,
+      double price,
+      int stockQuantity,
+      String size,
+      String material) {
+    super(productId, name, price, stockQuantity);
 
     this.size = size;
     this.material = material;
   }
 
-  // Calculate price
+  // ================================
+  // CALCULATE PRICE
+  // ================================
   @Override
   public double calculatePrice() {
     return getPrice();
   }
 
-  // Product details
+  // ================================
+  // PRODUCT DETAILS (UI READY)
+  // ================================
   @Override
-  public void getProductDetails() {
-    System.out.println("Product ID: " + getProductId());
-    System.out.println("Name: " + getName());
-    System.out.println("Price: RM" + getPrice());
-    System.out.println("Stock Quantity: " + getStockQuantity());
-    System.out.println("Size: " + size);
-    System.out.println("Material: " + material);
+  public String getProductDetails() {
+    return "=== CLOTHING PRODUCT ===\n"
+        + "Product ID: " + getProductId() + "\n"
+        + "Name: " + getName() + "\n"
+        + "Price: RM " + getPrice() + "\n"
+        + "Stock Quantity: " + getStockQuantity() + "\n"
+        + "Size: " + size + "\n"
+        + "Material: " + material;
   }
 
-  // Getters
+  // ================================
+  // GETTERS
+  // ================================
   public String getSize() {
     return size;
   }

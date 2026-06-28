@@ -1,48 +1,50 @@
 package com.g07.onlinestore.Product;
 
 public class Food extends Product {
+
   // Attributes
   private String expiryDate;
   private String category;
 
   // Constructor Food
   public Food(
-    String productId,
-    String name,
-    double price,
-    int stockQuantity,
-    String expiryDate,
-    String category
-  ) {
-    super(
-      productId,
-      name,
-      price,
-      stockQuantity
-    );
+      String productId,
+      String name,
+      double price,
+      int stockQuantity,
+      String expiryDate,
+      String category) {
+    super(productId, name, price, stockQuantity);
 
     this.expiryDate = expiryDate;
     this.category = category;
   }
 
-  // Calculate price
+  // ================================
+  // CALCULATE PRICE
+  // ================================
   @Override
   public double calculatePrice() {
     return getPrice();
   }
 
-  // Product details
+  // ================================
+  // PRODUCT DETAILS (UI READY)
+  // ================================
   @Override
-  public void getProductDetails() {
-    System.out.println("Food");
-    System.out.println("Name: " + getName());
-    System.out.println("Category: " + category);
-    System.out.println("Price: RM " + getPrice());
-    System.out.println("Expiry Date: " + expiryDate);
-    System.out.println("Stock Quantity: " + getStockQuantity());
+  public String getProductDetails() {
+    return "=== FOOD PRODUCT ===\n"
+        + "Product ID: " + getProductId() + "\n"
+        + "Name: " + getName() + "\n"
+        + "Category: " + category + "\n"
+        + "Price: RM " + getPrice() + "\n"
+        + "Expiry Date: " + expiryDate + "\n"
+        + "Stock Quantity: " + getStockQuantity();
   }
 
-  // Getters
+  // ================================
+  // GETTERS
+  // ================================
   public String getExpiryDate() {
     return expiryDate;
   }
