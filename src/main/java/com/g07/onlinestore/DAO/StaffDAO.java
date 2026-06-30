@@ -55,10 +55,60 @@ public class StaffDAO {
 
       ps.executeUpdate();
 
-      System.out.println(
-          "[Staff_" + staff.getStaffId() + "] Inserted Successfully!");
+      if (staff instanceof Manager) {
 
-      insertSubClass(staff);
+        Manager manager = (Manager) staff;
+
+        String sqlManager = "INSERT INTO manager " +
+            "(staff_id, department, bonus_rate) " +
+            "VALUES (?, ?, ?)";
+
+        PreparedStatement psManager = conn.prepareStatement(sqlManager);
+
+        psManager.setString(
+            1,
+            manager.getStaffId());
+
+        psManager.setString(
+            2,
+            manager.getDepartment());
+
+        psManager.setDouble(
+            3,
+            manager.getBonusRate());
+
+        psManager.executeUpdate();
+
+      } else if (staff instanceof DeliveryStaff) {
+
+        DeliveryStaff delivery = (DeliveryStaff) staff;
+
+        String sqlDelivery = "INSERT INTO delivery_staff " +
+            "(staff_id, vehicle_no, delivery_zone) " +
+            "VALUES (?, ?, ?)";
+
+        PreparedStatement psDelivery = conn.prepareStatement(sqlDelivery);
+
+        psDelivery.setString(
+            1,
+            delivery.getStaffId());
+
+        psDelivery.setString(
+            2,
+            delivery.getVehicleNo());
+
+        psDelivery.setString(
+            3,
+            delivery.getDeliveryZone());
+
+        psDelivery.executeUpdate();
+
+      }
+
+      System.out.println(
+          "[Staff_"
+              + staff.getStaffId()
+              + "] Inserted Successfully!");
 
     } catch (SQLException e) {
 
@@ -66,75 +116,15 @@ public class StaffDAO {
           "[ERROR] Insert Staff Failed");
 
       e.printStackTrace();
+
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
     }
+
   }
 
-  // Insert staff subclass
-  private void insertSubClass(Staff staff) {
-
-    try {
-
-      Connection conn = DBConnect.getConnection();
-
-      if (staff instanceof Manager) {
-
-        String sql = "INSERT INTO manager " +
-            "(staff_id, department, bonus_rate) " +
-            "VALUES (?, ?, ?)";
-
-        PreparedStatement ps = conn.prepareStatement(sql);
-
-        Manager manager = (Manager) staff;
-
-        ps.setString(
-            1,
-            manager.getStaffId());
-
-        ps.setString(
-            2,
-            manager.getDepartment());
-
-        ps.setDouble(
-            3,
-            manager.getBonusRate());
-
-        ps.executeUpdate();
-
-      } else if (staff instanceof DeliveryStaff) {
-
-        String sql = "INSERT INTO delivery_staff " +
-            "(staff_id, vehicle_no, delivery_zone) " +
-            "VALUES (?, ?, ?)";
-
-        PreparedStatement ps = conn.prepareStatement(sql);
-
-        DeliveryStaff delivery = (DeliveryStaff) staff;
-
-        ps.setString(
-            1,
-            delivery.getStaffId());
-
-        ps.setString(
-            2,
-            delivery.getVehicleNo());
-
-        ps.setString(
-            3,
-            delivery.getDeliveryZone());
-
-        ps.executeUpdate();
-
-      }
-    } catch (SQLException e) {
-
-      System.out.println(
-          "[ERROR] Insert Staff Details Failed");
-
-      e.printStackTrace();
-    }
-  }
-
-  // View all staff
+  // Get all staff
   public void getAllStaff() {
 
     String sql = "SELECT * FROM staff";
@@ -164,24 +154,126 @@ public class StaffDAO {
                 + rs.getString("email"));
 
         System.out.println(
-            "Phone: "
-                + rs.getString("phone_number"));
+            "Type: "
+                + rs.getString("staff_type"));
 
         System.out.println(
             "Salary: RM "
                 + rs.getDouble("salary"));
 
-        System.out.println(
-            "Type: "
-                + rs.getString("staff_type"));
-
       }
+
     } catch (SQLException e) {
 
       System.out.println(
           "[ERROR] Retrieve Staff Failed");
 
       e.printStackTrace();
+
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
     }
+
   }
+
+  // Get staff ID by name and email
+  public String getStaffId(
+      String name,
+      String email) {
+
+    String sql = "SELECT staff_id FROM staff WHERE name=? AND email=?";
+
+    try {
+
+      Connection conn = DBConnect.getConnection();
+
+      PreparedStatement ps = conn.prepareStatement(sql);
+
+      ps.setString(
+          1,
+          name);
+
+      ps.setString(
+          2,
+          email);
+
+      ResultSet rs = ps.executeQuery();
+
+      if (rs.next()) {
+
+        return rs.getString("staff_id");
+
+      }
+
+    } catch (SQLException e) {
+
+      System.out.println(
+          "[ERROR] Retrieve Staff ID Failed");
+
+      e.printStackTrace();
+
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
+    }
+
+    return null;
+
+  } 
+
+  // Delete staff
+  public void deleteStaff(
+      String staffId) {
+
+    try {
+
+      Connection conn = DBConnect.getConnection();
+
+      PreparedStatement ps1 = conn.prepareStatement(
+          "DELETE FROM manager WHERE staff_id=?");
+
+      ps1.setString(
+          1,
+          staffId);
+
+      ps1.executeUpdate();
+
+      PreparedStatement ps2 = conn.prepareStatement(
+          "DELETE FROM delivery_staff WHERE staff_id=?");
+
+      ps2.setString(
+          1,
+          staffId);
+
+      ps2.executeUpdate();
+
+      PreparedStatement ps3 = conn.prepareStatement(
+          "DELETE FROM staff WHERE staff_id=?");
+
+      ps3.setString(
+          1,
+          staffId);
+
+      ps3.executeUpdate();
+
+      System.out.println(
+          "[Staff_"
+              + staffId
+              + "] Deleted Successfully!");
+
+    } catch (SQLException e) {
+
+      System.out.println(
+          "[ERROR] Delete Staff Failed");
+
+      e.printStackTrace();
+
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
+    }
+
+  }
+
 }
