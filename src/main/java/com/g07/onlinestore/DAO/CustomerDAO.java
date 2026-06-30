@@ -13,6 +13,8 @@ public class CustomerDAO {
   // Insert customer
   public void insertCustomer(Customer customer) {
 
+    String checkSql = "SELECT 1 FROM customers WHERE customer_id=?";
+
     String sql = "INSERT INTO customers " +
         "(customer_id, person_id, name, email, phone_number, loyalty_points) " +
         "VALUES (?, ?, ?, ?, ?, ?)";
@@ -20,6 +22,22 @@ public class CustomerDAO {
     try {
 
       Connection conn = DBConnect.getConnection();
+
+      PreparedStatement check = conn.prepareStatement(checkSql);
+
+      check.setString(
+          1,
+          customer.getCustomerId());
+
+      ResultSet rs = check.executeQuery();
+
+      if (rs.next()) {
+
+        System.out.println(
+            "[ERROR] Customer already exists");
+
+        return;
+      }
 
       PreparedStatement ps = conn.prepareStatement(sql);
 
@@ -52,7 +70,7 @@ public class CustomerDAO {
       System.out.println(
           "[Customer_"
               + customer.getCustomerId()
-              + "] Inserted Successfully!");
+              + "] Inserted Successfully");
 
     } catch (SQLException e) {
 
@@ -61,6 +79,96 @@ public class CustomerDAO {
 
       e.printStackTrace();
     }
+  }
+
+  // Get customer ID using login information
+  public String getCustomerId(
+      String name,
+      String email) {
+
+    String sql = "SELECT customer_id FROM customers WHERE name=? AND email=?";
+
+    try {
+
+      Connection conn = DBConnect.getConnection();
+
+      PreparedStatement ps = conn.prepareStatement(sql);
+
+      ps.setString(
+          1,
+          name);
+
+      ps.setString(
+          2,
+          email);
+
+      ResultSet rs = ps.executeQuery();
+
+      if (rs.next()) {
+
+        return rs.getString(
+            "customer_id");
+      }
+
+    } catch (SQLException e) {
+
+      System.out.println(
+          "[ERROR] Retrieve Customer ID Failed");
+
+      e.printStackTrace();
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
+    }
+
+    return null;
+  }
+
+  // Find customer by ID
+  public Customer getCustomerById(
+      String customerId) {
+
+    String sql = "SELECT * FROM customers WHERE customer_id=?";
+
+    try {
+
+      Connection conn = DBConnect.getConnection();
+
+      PreparedStatement ps = conn.prepareStatement(sql);
+
+      ps.setString(
+          1,
+          customerId);
+
+      ResultSet rs = ps.executeQuery();
+
+      if (rs.next()) {
+
+        Customer customer = new Customer(
+            rs.getString("person_id"),
+            rs.getString("name"),
+            rs.getString("email"),
+            rs.getString("phone_number"),
+            rs.getString("customer_id"));
+
+        customer.addLoyaltyPoints(
+            rs.getInt("loyalty_points"));
+
+        return customer;
+      }
+
+    } catch (SQLException e) {
+
+      System.out.println(
+          "[ERROR] Find Customer Failed");
+
+      e.printStackTrace();
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
+    }
+
+    return null;
   }
 
   // View all customers
@@ -99,6 +207,9 @@ public class CustomerDAO {
         System.out.println(
             "Loyalty Points: "
                 + rs.getInt("loyalty_points"));
+
+        System.out.println("====================");
+
       }
 
     } catch (SQLException e) {
@@ -107,45 +218,10 @@ public class CustomerDAO {
           "[ERROR] Retrieve Customers Failed");
 
       e.printStackTrace();
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
     }
-  }
-
-  // Find customer
-  public Customer getCustomerById(String customerId) {
-
-    String sql = "SELECT * FROM customers WHERE customer_id=?";
-
-    try {
-
-      Connection conn = DBConnect.getConnection();
-
-      PreparedStatement ps = conn.prepareStatement(sql);
-
-      ps.setString(
-          1,
-          customerId);
-
-      ResultSet rs = ps.executeQuery();
-
-      if (rs.next()) {
-
-        return new Customer(
-            rs.getString("person_id"),
-            rs.getString("name"),
-            rs.getString("email"),
-            rs.getString("phone_number"),
-            rs.getString("customer_id"));
-      }
-
-    } catch (SQLException e) {
-
-      System.out.println(
-          "[ERROR] Find Customer Failed");
-
-      e.printStackTrace();
-    }
-
-    return null;
   }
 
   // Update loyalty points
@@ -153,9 +229,7 @@ public class CustomerDAO {
       String customerId,
       int points) {
 
-    String sql = "UPDATE customers SET " +
-        "loyalty_points=? " +
-        "WHERE customer_id=?";
+    String sql = "UPDATE customers SET loyalty_points=? WHERE customer_id=?";
 
     try {
 
@@ -176,14 +250,18 @@ public class CustomerDAO {
       System.out.println(
           "[Customer_"
               + customerId
-              + "] Loyalty Points Updated!");
+              + "] Loyalty Updated");
 
     } catch (SQLException e) {
 
       System.out.println(
-          "[ERROR] Update Loyalty Points Failed");
+          "[ERROR] Update Loyalty Failed");
 
       e.printStackTrace();
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
     }
   }
+
 }

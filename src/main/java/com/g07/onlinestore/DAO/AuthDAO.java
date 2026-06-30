@@ -1,57 +1,73 @@
 package com.g07.onlinestore.DAO;
 
 import com.g07.onlinestore.config.db.DBConnect;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 public class AuthDAO {
 
-  // LOGIN CUSTOMER (DEMO: name + email)
-  public boolean loginCustomer(String name, String email) {
-
-    String sql = "SELECT * FROM customers WHERE name=? AND email=?";
-
-    try {
-
-      Connection conn = DBConnect.getConnection();
-      PreparedStatement ps = conn.prepareStatement(sql);
-
-      ps.setString(1, name);
-      ps.setString(2, email);
-
-      ResultSet rs = ps.executeQuery();
-
-      return rs.next();
-
-    } catch (Exception e) {
-
-      System.out.println("[ERROR] Customer login failed");
-      return false;
-    }
-  }
-
-  // LOGIN STAFF (DEMO: name + email)
-  public boolean loginStaff(String name, String email) {
-
-    String sql = "SELECT * FROM staff WHERE name=? AND email=?";
+  // LOGIN SYSTEM
+  public String login(
+      String username,
+      String email) {
 
     try {
 
       Connection conn = DBConnect.getConnection();
-      PreparedStatement ps = conn.prepareStatement(sql);
 
-      ps.setString(1, name);
-      ps.setString(2, email);
+      // CHECK CUSTOMER
+      String customerSQL = "SELECT name FROM customers WHERE name=? AND email=?";
 
-      ResultSet rs = ps.executeQuery();
+      PreparedStatement customerPS = conn.prepareStatement(customerSQL);
 
-      return rs.next();
+      customerPS.setString(
+          1,
+          username);
+
+      customerPS.setString(
+          2,
+          email);
+
+      ResultSet customerRS = customerPS.executeQuery();
+
+      if (customerRS.next()) {
+
+        return "CUSTOMER";
+
+      }
+
+      // CHECK STAFF / MANAGER
+      String staffSQL = "SELECT staff_type FROM staff WHERE name=? AND email=?";
+
+      PreparedStatement staffPS = conn.prepareStatement(staffSQL);
+
+      staffPS.setString(
+          1,
+          username);
+
+      staffPS.setString(
+          2,
+          email);
+
+      ResultSet staffRS = staffPS.executeQuery();
+
+      if (staffRS.next()) {
+
+        return staffRS.getString("staff_type");
+
+      }
 
     } catch (Exception e) {
 
-      System.out.println("[ERROR] Staff login failed");
-      return false;
+      System.out.println(
+          "[ERROR] Login Failed");
+
+      e.printStackTrace();
+
     }
+
+    return null;
   }
 }

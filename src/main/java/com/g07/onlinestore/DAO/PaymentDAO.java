@@ -10,7 +10,14 @@ import java.sql.SQLException;
 
 public class PaymentDAO {
 
-  // Insert payment
+  // Generate payment ID
+  public String generatePaymentId() {
+
+    return "PAY" + System.currentTimeMillis();
+
+  }
+
+  // Insert Payment
   public void insertPayment(
       Payment payment,
       String orderId) {
@@ -35,7 +42,8 @@ public class PaymentDAO {
 
       ps.setString(
           3,
-          payment.getPaymentMethod().toString());
+          payment.getPaymentMethod()
+              .toString());
 
       ps.setDouble(
           4,
@@ -52,9 +60,9 @@ public class PaymentDAO {
       ps.executeUpdate();
 
       System.out.println(
-          "[Payment_"
-              + payment.getPaymentId()
-              + "] Inserted Successfully!");
+          "[Payment_" +
+              payment.getPaymentId() +
+              "] Inserted Successfully");
 
     } catch (SQLException e) {
 
@@ -62,10 +70,15 @@ public class PaymentDAO {
           "[ERROR] Insert Payment Failed");
 
       e.printStackTrace();
+
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
     }
+
   }
 
-  // View all payments
+  // Get all payments
   public void getAllPayments() {
 
     String sql = "SELECT * FROM payments";
@@ -80,7 +93,8 @@ public class PaymentDAO {
 
       while (rs.next()) {
 
-        System.out.println("====================");
+        System.out.println(
+            "====================");
 
         System.out.println(
             "Payment ID: "
@@ -99,21 +113,23 @@ public class PaymentDAO {
                 + rs.getDouble("amount"));
 
         System.out.println(
-            "Transaction Fee: RM "
-                + rs.getDouble("transaction_fee"));
-
-        System.out.println(
             "Status: "
                 + rs.getString("status"));
+
       }
 
     } catch (SQLException e) {
 
       System.out.println(
-          "[ERROR] Retrieve Payments Failed");
+          "[ERROR] Retrieve Payment Failed");
 
       e.printStackTrace();
+
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
     }
+
   }
 
   // Update payment status
@@ -121,8 +137,7 @@ public class PaymentDAO {
       String paymentId,
       String status) {
 
-    String sql = "UPDATE payments SET " +
-        "status=? " +
+    String sql = "UPDATE payments SET status=? " +
         "WHERE payment_id=?";
 
     try {
@@ -142,9 +157,7 @@ public class PaymentDAO {
       ps.executeUpdate();
 
       System.out.println(
-          "[Payment_"
-              + paymentId
-              + "] Status Updated!");
+          "Payment Status Updated");
 
     } catch (SQLException e) {
 
@@ -152,6 +165,39 @@ public class PaymentDAO {
           "[ERROR] Update Payment Failed");
 
       e.printStackTrace();
+
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
     }
+
   }
+
+  // Check payment exists
+  public boolean paymentExists(
+      String paymentId) {
+
+    try {
+
+      Connection conn = DBConnect.getConnection();
+
+      PreparedStatement ps = conn.prepareStatement(
+          "SELECT 1 FROM payments WHERE payment_id=?");
+
+      ps.setString(
+          1,
+          paymentId);
+
+      ResultSet rs = ps.executeQuery();
+
+      return rs.next();
+
+    } catch (Exception e) {
+
+      return false;
+
+    }
+
+  }
+
 }

@@ -10,33 +10,54 @@ public class DBConnect {
 
   private static final Dotenv dotenv = Dotenv.load();
 
+  private static Connection conn;
+
   public static Connection getConnection() {
-    String url = dotenv.get("SUPABASE_URL");
-    String user = dotenv.get("SUPABASE_USER");
-    String pass = dotenv.get("SUPABASE_PASSWORD");
 
     try {
-      if (url == null || user == null || pass == null) {
-        throw new RuntimeException("[.env] variables missing");
+
+      if (conn == null || conn.isClosed()) {
+
+        String url = dotenv.get("SUPABASE_URL");
+        String user = dotenv.get("SUPABASE_USER");
+        String pass = dotenv.get("SUPABASE_PASSWORD");
+
+        if (url == null || user == null || pass == null) {
+
+          throw new RuntimeException(
+              "[.env] variables missing");
+
+        }
+
+        conn = DriverManager.getConnection(url, user, pass);
+
+        System.out.println(
+            "[Connected to Supabase] ... OK");
+
       }
 
-      Connection conn = DriverManager.getConnection(url, user, pass);
-
-      System.out.println("[Connected to Supabase] ... OK\n");
-      
-      return conn;
     } catch (SQLException e) {
-      System.out.println("[Database connection failed] ... ERROR\n");
+
+      System.out.println(
+          "[Database connection failed] ... ERROR");
 
       e.printStackTrace();
 
-      return null;
     }
+
+    return conn;
+
   }
 
   public void DBTestConnect(Connection obj) {
+
     if (obj != null) {
-      System.out.println("[Database test successful] ... OK\n");
+
+      System.out.println(
+          "[Database connected] ... OK\n");
+
     }
+
   }
+
 }

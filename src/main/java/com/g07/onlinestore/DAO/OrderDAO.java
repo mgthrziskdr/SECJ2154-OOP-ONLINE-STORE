@@ -12,11 +12,11 @@ import java.sql.SQLException;
 public class OrderDAO {
 
   // Insert order
-  public void insertOrder(Order order) {
+  public void insertOrder(Order order, String customerId) {
 
     String sql = "INSERT INTO orders " +
-        "(order_id, order_date, status, total_amount, updated_at) " +
-        "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        "(order_id, customer_id, order_date, status, total_amount, updated_at) " +
+        "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
 
     try {
 
@@ -24,21 +24,11 @@ public class OrderDAO {
 
       PreparedStatement ps = conn.prepareStatement(sql);
 
-      ps.setString(
-          1,
-          order.getOrderId());
-
-      ps.setDate(
-          2,
-          java.sql.Date.valueOf(order.getOrderDate()));
-
-      ps.setString(
-          3,
-          order.getStatus());
-
-      ps.setDouble(
-          4,
-          order.calculateTotal());
+      ps.setString(1, order.getOrderId());
+      ps.setString(2, customerId);
+      ps.setDate(3, java.sql.Date.valueOf(order.getOrderDate()));
+      ps.setString(4, order.getStatus());
+      ps.setDouble(5, calculateCustomerTotal(customerId));
 
       ps.executeUpdate();
 
@@ -49,10 +39,12 @@ public class OrderDAO {
 
     } catch (SQLException e) {
 
-      System.out.println(
-          "[ERROR] Insert Order Failed");
-
+      System.out.println("[ERROR] Insert Order Failed");
       e.printStackTrace();
+
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
     }
   }
 
@@ -84,19 +76,25 @@ public class OrderDAO {
             1);
 
         ps.executeUpdate();
+
       }
 
     } catch (SQLException e) {
 
-      System.out.println(
-          "[ERROR] Insert Order Items Failed");
-
+      System.out.println("[ERROR] Insert Order Items Failed");
       e.printStackTrace();
+
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
     }
+
   }
 
-  // View incoming orders
-  public void getAllOrders() {
+  // Staff view all incoming orders
+  public String getAllOrders() {
+
+    StringBuilder result = new StringBuilder();
 
     String sql = "SELECT * FROM orders";
 
@@ -108,49 +106,70 @@ public class OrderDAO {
 
       ResultSet rs = ps.executeQuery();
 
+      boolean found = false;
+
       while (rs.next()) {
 
-        System.out.println("====================");
+        found = true;
 
-        System.out.println(
-            "Order ID: "
-                + rs.getString("order_id"));
+        result.append("====================\n");
 
-        System.out.println(
-            "Date: "
-                + rs.getDate("order_date"));
+        result.append("Order ID: ")
+            .append(rs.getString("order_id"))
+            .append("\n");
 
-        System.out.println(
-            "Status: "
-                + rs.getString("status"));
+        result.append("Customer ID: ")
+            .append(rs.getString("customer_id"))
+            .append("\n");
 
-        System.out.println(
-            "Total: RM "
-                + rs.getDouble("total_amount"));
+        result.append("Date: ")
+            .append(rs.getDate("order_date"))
+            .append("\n");
 
-        getOrderItems(
-            rs.getString("order_id"));
+        result.append("Status: ")
+            .append(rs.getString("status"))
+            .append("\n");
+
+        result.append("Total: RM ")
+            .append(rs.getDouble("total_amount"))
+            .append("\n");
+
+        result.append(getOrderItems(
+            rs.getString("order_id")));
+
+        result.append("\n");
+
+      }
+
+      if (!found) {
+
+        return "No incoming orders found.";
+
       }
 
     } catch (SQLException e) {
 
-      System.out.println(
-          "[ERROR] Retrieve Orders Failed");
+      return "[ERROR] Retrieve Orders Failed";
 
-      e.printStackTrace();
+    } catch (Exception e) {
+
+      return "[ERROR] Something Wrong?";
     }
+
+    return result.toString();
+
   }
 
-  // View order items
-  private void getOrderItems(String orderId) {
+  // Get order items
+  private String getOrderItems(String orderId) {
 
-    String sql = "SELECT order_items.product_id, " +
-        "products.product_name, " +
-        "order_items.quantity " +
+    StringBuilder result = new StringBuilder();
+
+    String sql = "SELECT products.product_name, order_items.quantity " +
         "FROM order_items " +
         "JOIN products " +
         "ON order_items.product_id = products.product_id " +
-        "WHERE order_id=?";
+        "WHERE order_items.order_id=?";
 
     try {
 
@@ -164,24 +183,69 @@ public class OrderDAO {
 
       ResultSet rs = ps.executeQuery();
 
-      System.out.println("Items:");
+      result.append("Items:\n");
 
       while (rs.next()) {
 
-        System.out.println(
-            "- "
-                + rs.getString("product_name")
-                + " x"
-                + rs.getInt("quantity"));
+        result.append("- ")
+            .append(rs.getString("product_name"))
+            .append(" x")
+            .append(rs.getInt("quantity"))
+            .append("\n");
+
       }
 
     } catch (SQLException e) {
 
-      System.out.println(
-          "[ERROR] Retrieve Order Items Failed");
+      result.append("[ERROR] Retrieve Items Failed");
+
+      return "[ERROR] Retrieve Items Failed";
+
+    } catch (Exception e) {
+
+      return "[ERROR] Something Wrong?";
+    }
+
+    return result.toString();
+
+  }
+
+  public double calculateCustomerTotal(String customerId) {
+
+    double total = 0;
+
+    String sql = "SELECT SUM(products.product_price * order_items.quantity) AS total " +
+        "FROM orders " +
+        "JOIN order_items " +
+        "ON orders.order_id = order_items.order_id " +
+        "JOIN products " +
+        "ON order_items.product_id = products.product_id " +
+        "WHERE orders.customer_id=?";
+
+    try {
+
+      Connection conn = DBConnect.getConnection();
+
+      PreparedStatement ps = conn.prepareStatement(sql);
+
+      ps.setString(1, customerId);
+
+      ResultSet rs = ps.executeQuery();
+
+      if (rs.next()) {
+
+        total = rs.getDouble("total");
+
+      }
+
+    } catch (SQLException e) {
 
       e.printStackTrace();
+
     }
+
+    return total;
+
   }
 
   // Update order status
@@ -189,10 +253,7 @@ public class OrderDAO {
       String orderId,
       String status) {
 
-    String sql = "UPDATE orders SET " +
-        "status=?, " +
-        "updated_at=CURRENT_TIMESTAMP " +
-        "WHERE order_id=?";
+    String sql = "UPDATE orders SET status=?, updated_at=CURRENT_TIMESTAMP WHERE order_id=?";
 
     try {
 
@@ -211,16 +272,89 @@ public class OrderDAO {
       ps.executeUpdate();
 
       System.out.println(
-          "[Order_"
-              + orderId
-              + "] Status Updated!");
+          "[Order_" + orderId + "] Status Updated!");
 
     } catch (SQLException e) {
 
-      System.out.println(
-          "[ERROR] Update Order Failed");
+      System.out.println("[ERROR] Update Order Failed");
 
       e.printStackTrace();
+
+    } catch (Exception e) {
+
+      System.out.println("[ERROR] Something Wrong?");
     }
+
   }
-} 
+
+  // Customer view order history
+  public String getCustomerOrderHistory(String customerId) {
+
+    StringBuilder result = new StringBuilder();
+
+    String sql = "SELECT * FROM orders WHERE customer_id=?";
+
+    try {
+
+      Connection conn = DBConnect.getConnection();
+
+      PreparedStatement ps = conn.prepareStatement(sql);
+
+      ps.setString(
+          1,
+          customerId);
+
+      ResultSet rs = ps.executeQuery();
+
+      boolean found = false;
+
+      while (rs.next()) {
+
+        found = true;
+
+        result.append("====================\n");
+
+        result.append("Order ID: ")
+            .append(rs.getString("order_id"))
+            .append("\n");
+
+        result.append("Date: ")
+            .append(rs.getDate("order_date"))
+            .append("\n");
+
+        result.append("Status: ")
+            .append(rs.getString("status"))
+            .append("\n");
+
+        result.append("Total: RM ")
+            .append(rs.getDouble("total_amount"))
+            .append("\n");
+
+        result.append(
+            getOrderItems(
+                rs.getString("order_id")));
+
+        result.append("\n");
+
+      }
+
+      if (!found) {
+
+        return "No previous orders found.";
+
+      }
+
+    } catch (SQLException e) {
+
+      return "[ERROR] Retrieve Customer History Failed";
+
+    } catch (Exception e) {
+
+      return "[ERROR] Something Wrong?";
+    }
+
+    return result.toString();
+
+  }
+
+}
