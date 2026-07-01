@@ -18,64 +18,92 @@ public class PaymentDAO {
   }
 
   // Insert Payment
-  public void insertPayment(
-      Payment payment,
-      String orderId) {
+  public void insertPayment(Payment payment, String orderId, String customerId) {
 
-    String sql = "INSERT INTO payments " +
+    String insertPaymentSql = "INSERT INTO payments " +
         "(payment_id, order_id, payment_method, amount, transaction_fee, status) " +
         "VALUES (?, ?, ?, ?, ?, ?)";
 
+    String updateOrderSql = "UPDATE orders SET status = ? WHERE customer_id = ?";
+
+    Connection conn = null;
+
     try {
 
-      Connection conn = DBConnect.getConnection();
+      conn = DBConnect.getConnection();
+      conn.setAutoCommit(false);
 
-      PreparedStatement ps = conn.prepareStatement(sql);
+      // Insert payment
+      PreparedStatement ps = conn.prepareStatement(insertPaymentSql);
 
-      ps.setString(
-          1,
-          payment.getPaymentId());
-
-      ps.setString(
-          2,
-          orderId);
-
-      ps.setString(
-          3,
-          payment.getPaymentMethod()
-              .toString());
-
-      ps.setDouble(
-          4,
-          payment.getAmount());
-
-      ps.setDouble(
-          5,
-          payment.getTransactionFee());
-
-      ps.setString(
-          6,
-          payment.getStatus());
+      ps.setString(1, payment.getPaymentId());
+      ps.setString(2, orderId);
+      ps.setString(3, payment.getPaymentMethod().toString());
+      ps.setDouble(4, payment.getAmount());
+      ps.setDouble(5, payment.getTransactionFee());
+      ps.setString(6, payment.getStatus());
 
       ps.executeUpdate();
 
+      // Update order status
+      PreparedStatement ps2 = conn.prepareStatement(updateOrderSql);
+
+      ps2.setString(1, "Success");
+      ps2.setString(2, customerId);
+
+      int rows = ps2.executeUpdate();
+
+      if (rows == 0) {
+        throw new SQLException("Order not found: " + orderId);
+      }
+
+      conn.commit();
+
       System.out.println(
-          "[Payment_" +
-              payment.getPaymentId() +
-              "] Inserted Successfully");
+          "[Payment_" + payment.getPaymentId() + "] Processed Successfully!");
+      System.out.println(
+          "[Order_" + orderId + "] Status Updated to Success!");
+
+      ps.close();
+      ps2.close();
 
     } catch (SQLException e) {
 
-      System.out.println(
-          "[ERROR] Insert Payment Failed");
+      try {
+        if (conn != null) {
+          conn.rollback();
+        }
+      } catch (SQLException ex) {
+        ex.printStackTrace();
+      }
 
+      System.out.println("[ERROR] Payment Processing Failed");
       e.printStackTrace();
 
     } catch (Exception e) {
 
-      System.out.println("[ERROR] Something Wrong?");
-    }
+      try {
+        if (conn != null) {
+          conn.rollback();
+        }
+      } catch (SQLException ex) {
+        ex.printStackTrace();
+      }
 
+      System.out.println("[ERROR] Something Went Wrong");
+      e.printStackTrace();
+
+    } finally {
+
+      try {
+        if (conn != null) {
+          conn.setAutoCommit(true);
+          conn.close();
+        }
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   // Get all payments

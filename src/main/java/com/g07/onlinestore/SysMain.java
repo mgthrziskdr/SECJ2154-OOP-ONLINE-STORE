@@ -13,14 +13,49 @@ import com.g07.onlinestore.config.db.DBConnect;
 import javax.swing.JOptionPane;
 import java.sql.Connection;
 import java.util.Random;
+import java.text.DecimalFormat;
 
 public class SysMain {
 
   private static String customerId;
 
-  public static String createRandomOrder(String prefix) {
+  public static String createRandomString(String prefix) {
     Random random = new Random();
     return prefix + (1000 + random.nextInt(9000));
+  }
+
+  public static String ascNumSelection(String title, String content, int size) {
+    String[] dropList = new String[size];
+
+    String selection;
+
+    int x = 0;
+
+    for (int i = 0; i < dropList.length; i++) {
+      x += 1;
+      dropList[i] = String.valueOf(x);
+    }
+
+    selection = (String) JOptionPane.showInputDialog(null, content, title, JOptionPane.PLAIN_MESSAGE, null, dropList,
+        dropList[0]);
+
+    return selection;
+  }
+
+  public static String productSelection(String title, String content, String[] productIds) {
+    return (String) JOptionPane.showInputDialog(
+        null,
+        content,
+        title,
+        JOptionPane.PLAIN_MESSAGE,
+        null,
+        productIds,
+        productIds[0]);
+  }
+
+  public static String amountFormat(double num) {
+    DecimalFormat df = new DecimalFormat("0.00");
+    return df.format(num);
   }
 
   public static void main(String[] args) {
@@ -61,8 +96,8 @@ public class SysMain {
         String email = JOptionPane.showInputDialog(null, "Enter Email:", "New Customer", JOptionPane.PLAIN_MESSAGE);
         String phone = JOptionPane.showInputDialog(null, "Enter Phone:", "New Customer", JOptionPane.PLAIN_MESSAGE);
 
-        String personId = createRandomOrder("PRN");
-        String customerIdGen = createRandomOrder("CUST");
+        String personId = createRandomString("PRN");
+        String customerIdGen = createRandomString("CUST");
 
         Customer newCustomer = new Customer(
             personId,
@@ -134,7 +169,8 @@ public class SysMain {
                 7. Exit
                 """;
 
-            String choice = JOptionPane.showInputDialog(null, menu, "Staff & Manager Menu", JOptionPane.PLAIN_MESSAGE);
+            String choice = ascNumSelection("Staff & Manager Menu", menu, 7);
+
             if (choice == null)
               break;
 
@@ -142,9 +178,7 @@ public class SysMain {
 
               case "1": {
 
-                String type = JOptionPane.showInputDialog(null, "1. Electronic\n2. Clothing\n3. Food\n\n",
-                    "Add New Product",
-                    JOptionPane.PLAIN_MESSAGE);
+                String type = ascNumSelection("Add New Product", "1. Electronic\n2. Clothing\n3. Food\n\n", 3);
 
                 String name = JOptionPane.showInputDialog(null, "Name:", "Add New Product", JOptionPane.PLAIN_MESSAGE);
 
@@ -158,20 +192,20 @@ public class SysMain {
 
                 if (type.equals("1")) {
                   p = new Electronic(
-                      createRandomOrder("E"), name, price, stock,
+                      createRandomString("E"), name, price, stock,
                       Integer.parseInt(JOptionPane.showInputDialog(null, "Warranty:", "Electronic Category",
                           JOptionPane.PLAIN_MESSAGE)),
                       JOptionPane.showInputDialog(null, "Brand:", "Electronic Category", JOptionPane.PLAIN_MESSAGE));
 
                 } else if (type.equals("2")) {
                   p = new Clothing(
-                      createRandomOrder("C"), name, price, stock,
+                      createRandomString("C"), name, price, stock,
                       JOptionPane.showInputDialog(null, "Size:", "Clothing Category", JOptionPane.PLAIN_MESSAGE),
                       JOptionPane.showInputDialog(null, "Material:", "Clothing Category", JOptionPane.PLAIN_MESSAGE));
 
                 } else if (type.equals("3")) {
                   p = new Food(
-                      createRandomOrder("F"), name, price, stock,
+                      createRandomString("F"), name, price, stock,
                       JOptionPane.showInputDialog(null, "Expiry Date:", "Food Category", JOptionPane.PLAIN_MESSAGE),
                       JOptionPane.showInputDialog(null, "Category:", "Food Category", JOptionPane.PLAIN_MESSAGE));
                 }
@@ -186,18 +220,22 @@ public class SysMain {
               }
 
               case "2": {
-                String id = JOptionPane.showInputDialog(null, productDAO.getListOfProducts() + "\nProduct ID:",
-                    "Delete Log", JOptionPane.PLAIN_MESSAGE);
+
+                String id = productSelection("Delete Log", productDAO.getListOfProducts() + "\nProduct ID:",
+                    productDAO.getListOfProductId());
+
                 productDAO.deleteProduct(id);
-                JOptionPane.showMessageDialog(null, "Product Deleted!", "Delete Log", JOptionPane.INFORMATION_MESSAGE);
+
+                JOptionPane.showMessageDialog(null, "Product " + id + " Deleted!", "Delete Log",
+                    JOptionPane.INFORMATION_MESSAGE);
+
                 break;
               }
 
               case "3": {
 
-                String id = JOptionPane.showInputDialog(null, productDAO.getListOfProducts() + "\nProduct ID:",
-                    "Update Log",
-                    JOptionPane.PLAIN_MESSAGE);
+                String id = productSelection("Update Log", productDAO.getListOfProducts() + "\nProduct ID:",
+                    productDAO.getListOfProductId());
 
                 if (!productDAO.productExists(id)) {
 
@@ -210,8 +248,10 @@ public class SysMain {
 
                 String newName = JOptionPane.showInputDialog(null, "New Name:", "Update Log",
                     JOptionPane.PLAIN_MESSAGE);
+
                 double newPrice = Double.parseDouble(
                     JOptionPane.showInputDialog(null, "New Price:", "Update Log", JOptionPane.PLAIN_MESSAGE));
+
                 int newStock = Integer.parseInt(
                     JOptionPane.showInputDialog(null, "New Stock:", "Update Log", JOptionPane.PLAIN_MESSAGE));
 
@@ -225,10 +265,11 @@ public class SysMain {
                   case "Electronic":
 
                     String newBrand = JOptionPane.showInputDialog(null, "New Brand:", "Update Log",
-                    JOptionPane.PLAIN_MESSAGE);
+                        JOptionPane.PLAIN_MESSAGE);
 
                     int newWarrantyPeriod = Integer.parseInt(
-                    JOptionPane.showInputDialog(null, "New Warranty Period:", "Update Log", JOptionPane.PLAIN_MESSAGE));
+                        JOptionPane.showInputDialog(null, "New Warranty Period:", "Update Log",
+                            JOptionPane.PLAIN_MESSAGE));
 
                     updatedProduct = new Electronic(
                         id,
@@ -241,12 +282,12 @@ public class SysMain {
                     break;
 
                   case "Clothing":
-                    
+
                     String newSize = JOptionPane.showInputDialog(null, "New Size:", "Update Log",
-                    JOptionPane.PLAIN_MESSAGE);
+                        JOptionPane.PLAIN_MESSAGE);
 
                     String newMaterial = JOptionPane.showInputDialog(null, "New Material:", "Update Log",
-                    JOptionPane.PLAIN_MESSAGE);
+                        JOptionPane.PLAIN_MESSAGE);
 
                     updatedProduct = new Clothing(
                         id,
@@ -261,10 +302,10 @@ public class SysMain {
                   case "Food":
 
                     String newExpiryDate = JOptionPane.showInputDialog(null, "New Expiry Date:", "Update Log",
-                    JOptionPane.PLAIN_MESSAGE);
+                        JOptionPane.PLAIN_MESSAGE);
 
                     String newCategory = JOptionPane.showInputDialog(null, "New Category:", "Update Log",
-                    JOptionPane.PLAIN_MESSAGE);
+                        JOptionPane.PLAIN_MESSAGE);
 
                     updatedProduct = new Food(
                         id,
@@ -282,22 +323,36 @@ public class SysMain {
                         null,
                         "Unknown product type",
                         "Product?",
-                        JOptionPane.WARNING_MESSAGE
-                    );
+                        JOptionPane.WARNING_MESSAGE);
 
                     updatedProduct = null;
                     break;
 
                 }
 
-                productDAO.updateProduct(updatedProduct);
+                if (updatedProduct != null) {
 
-                JOptionPane.showMessageDialog(null, "Product Updated!", "Update Log", JOptionPane.INFORMATION_MESSAGE);
+                  productDAO.updateProduct(updatedProduct);
+
+                  JOptionPane.showMessageDialog(
+                      null,
+                      "Product " + id + " Updated!",
+                      "Update Log",
+                      JOptionPane.INFORMATION_MESSAGE);
+
+                }
                 break;
               }
 
               case "4": {
                 JOptionPane.showMessageDialog(null, productDAO.getListOfProducts(), "List Of Products",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+                System.out.println("\nList Of Products");
+                System.out.println("===========================");
+                System.out.println(productDAO.getListOfProducts());
+
+                JOptionPane.showMessageDialog(null, "Check console for products", "Notice",
                     JOptionPane.INFORMATION_MESSAGE);
                 break;
               }
@@ -306,7 +361,12 @@ public class SysMain {
                 JOptionPane.showMessageDialog(null, orderDAO.getAllOrders(), "Incoming Orders",
                     JOptionPane.INFORMATION_MESSAGE);
 
+                System.out.println("\nList Of Orders");
                 System.out.println(orderDAO.getAllOrders());
+
+                JOptionPane.showMessageDialog(null, "Check console for orders", "Notice",
+                    JOptionPane.INFORMATION_MESSAGE);
+
                 break;
               }
 
@@ -317,19 +377,21 @@ public class SysMain {
                   break;
                 }
 
-                String staffType = JOptionPane.showInputDialog(null, "1.Manager\n2.Delivery", "",
+                String staffType = ascNumSelection("Add New Staff", "1. Manager\n2. Delivery\n3. Regular Staff\n\nStaff Type:", 3);
+
+                String name = JOptionPane.showInputDialog(null, "Name:", "Add New Staff", JOptionPane.PLAIN_MESSAGE);
+
+                String emailStaff = JOptionPane.showInputDialog(null, "Email:", "Add New Staff",
                     JOptionPane.PLAIN_MESSAGE);
 
-                String name = JOptionPane.showInputDialog(null, "Name:", "Enter Staff Name", JOptionPane.PLAIN_MESSAGE);
-                String emailStaff = JOptionPane.showInputDialog(null, "Email:", "Enter Staff Email",
+                String phone = JOptionPane.showInputDialog(null, "Phone:", "Add New Staff",
                     JOptionPane.PLAIN_MESSAGE);
-                String phone = JOptionPane.showInputDialog(null, "Phone:", "Enter Staff H.P",
-                    JOptionPane.PLAIN_MESSAGE);
+
                 double salary = Double.parseDouble(
                     JOptionPane.showInputDialog(null, "Salary:", "Enter Staff Salary", JOptionPane.PLAIN_MESSAGE));
 
-                String personId = createRandomOrder("PRN");
-                String staffId = createRandomOrder("STF");
+                String personId = createRandomString("PRN");
+                String staffId = createRandomString("STF");
 
                 Staff s = null;
 
@@ -344,8 +406,12 @@ public class SysMain {
                 } else if (staffType.equals("2")) {
                   String zone = JOptionPane.showInputDialog(null, "Delivery Zone:", "Enter a Delivery Zone",
                       JOptionPane.PLAIN_MESSAGE);
+
                   s = new DeliveryStaff(personId, name, emailStaff, phone, staffId, salary,
-                      createRandomOrder("VAN"), zone);
+                      createRandomString("VAN"), zone);
+
+                } else if (staffType.equals("3")) {
+                  s = new RegularStaff(personId, name, emailStaff, phone, staffId, salary);
                 }
 
                 if (s != null) {
@@ -375,12 +441,13 @@ public class SysMain {
                 1. View Products
                 2. Create Order
                 3. Make Payment
-                4. View Order
+                4. View Total
                 5. Order History
                 6. Exit
                 """;
 
-            String choice = JOptionPane.showInputDialog(null, menu, "Customer Menu", JOptionPane.PLAIN_MESSAGE);
+            String choice = ascNumSelection("Customer Menu", menu, 6);
+
             if (choice == null)
               break;
 
@@ -395,26 +462,17 @@ public class SysMain {
               // FIXED ORDER CREATION
               case "2": {
 
-                order = new Order();
+                order = new Order(createRandomString("ORD"));
 
-                String productId = JOptionPane.showInputDialog(
-                    null,
-                    productDAO.getListOfProducts() + "\nEnter Product ID:",
-                    "Create New Order",
-                    JOptionPane.PLAIN_MESSAGE);
+                String productId = productSelection("Create New Order",
+                    productDAO.getListOfProducts() + "\nEnter Product ID:", productDAO.getListOfProductId());
 
                 if (!productDAO.productExists(productId)) {
                   JOptionPane.showMessageDialog(null, "Invalid Product!", "Invalid!", JOptionPane.WARNING_MESSAGE);
                   break;
                 }
 
-                Product p = new Electronic(
-                    productId,
-                    "ORDER_ITEM",
-                    0,
-                    1,
-                    0,
-                    "N/A");
+                Product p = productDAO.getProduct(productId);
 
                 order.addItem(p);
 
@@ -427,35 +485,52 @@ public class SysMain {
 
               case "3": {
 
-                if (order == null) {
-                  JOptionPane.showMessageDialog(null, "Create order first!", "Order?", JOptionPane.WARNING_MESSAGE);
+                double orderTotal = 0.0;
+                String orderId;
+
+                if (order == null && orderDAO.getCustomerTotalSpent(customerId) <= 0.0) {
+                  JOptionPane.showMessageDialog(
+                      null,
+                      "Create order first!",
+                      "Order?",
+                      JOptionPane.WARNING_MESSAGE);
                   break;
                 }
 
-                double customerTotal = orderDAO.calculateCustomerTotal(customerId);
+                if (order == null) {
+                  orderTotal = orderDAO.getCustomerTotalSpent(customerId);
+                  orderId = orderDAO.getLatestPendingOrderId(customerId);
+                } else {
+                  orderTotal = order.calculateTotal();
+                  orderId = order.getOrderId();
+                }
 
                 Payment payment = new Payment(
                     paymentDAO.generatePaymentId(),
                     PaymentMethod.FPX_BANKING,
-                    customerTotal);
+                    orderTotal);
 
                 payment.processPayment();
 
-                paymentDAO.insertPayment(payment, order.getOrderId());
+                paymentDAO.insertPayment(payment, orderId, customerId);
 
-                JOptionPane.showMessageDialog(null, "Payment Successful!", "Success!", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(
+                    null,
+                    "Payment Successful!",
+                    "Success!",
+                    JOptionPane.INFORMATION_MESSAGE);
+
                 break;
               }
 
               case "4": {
-                if (order == null) {
-                  JOptionPane.showMessageDialog(null, "No order yet!", "Order?", JOptionPane.WARNING_MESSAGE);
-                } else {
-                  JOptionPane.showMessageDialog(null,
-                      "Order ID: " + order.getOrderId() +
-                          "\nTotal: " + order.calculateTotal(),
-                      "Total Payment", JOptionPane.INFORMATION_MESSAGE);
-                }
+
+                double orderTotal = orderDAO.getCustomerTotalSpent(customerId);
+
+                JOptionPane.showMessageDialog(null,
+                    "Total Summary: RM " + amountFormat(orderTotal),
+                    "Total Payment", JOptionPane.INFORMATION_MESSAGE);
+
                 break;
               }
 
@@ -464,6 +539,12 @@ public class SysMain {
                     null,
                     orderDAO.getCustomerOrderHistory(customerId),
                     "Order History",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+                System.out.println("\nOrder History");
+                System.out.println(orderDAO.getCustomerOrderHistory(customerId));
+
+                JOptionPane.showMessageDialog(null, "Check console for orders", "Notice",
                     JOptionPane.INFORMATION_MESSAGE);
                 break;
               }

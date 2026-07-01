@@ -4,7 +4,6 @@ import com.g07.onlinestore.Product.Product;
 
 import java.util.ArrayList;
 import java.time.LocalDate;
-import java.util.Random;
 
 public class Order {
 
@@ -15,20 +14,14 @@ public class Order {
   private ArrayList<Product> items;
   private double totalAmount;
 
-  // Generate random order ID
-  public static String createRandomOrder() {
-    Random random = new Random();
-    return "ORD" + (1000 + random.nextInt(9000));
-  }
-
   // Generate random order date
   public static String createRandomDate() {
     return LocalDate.now().toString();
   }
 
   // Constructor Order
-  public Order() {
-    this.orderId = createRandomOrder();
+  public Order(String orderId) {
+    this.orderId = orderId;
     this.orderDate = createRandomDate();
     this.status = "Pending";
     this.items = new ArrayList<>();
