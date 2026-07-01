@@ -14,50 +14,104 @@ public class OrderDAO {
   // Insert order
   public void insertOrder(Order order, String customerId) {
 
-    String sql = "INSERT INTO orders " +
+    String orderSql = "INSERT INTO orders " +
         "(order_id, customer_id, order_date, status, total_amount, updated_at) " +
         "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
 
+    String checkStockSql = "SELECT stock_quantity FROM products WHERE product_id = ?";
+
+    String updateStockSql = "UPDATE products SET stock_quantity = stock_quantity - ? WHERE product_id = ?";
+
+    Connection conn = null;
+
     try {
 
-      Connection conn = DBConnect.getConnection();
+      conn = DBConnect.getConnection();
+      conn.setAutoCommit(false); // Start transaction
 
-      PreparedStatement ps = conn.prepareStatement(sql);
+      // Insert order
+      PreparedStatement ps = conn.prepareStatement(orderSql);
 
       ps.setString(1, order.getOrderId());
       ps.setString(2, customerId);
       ps.setDate(3, java.sql.Date.valueOf(order.getOrderDate()));
       ps.setString(4, order.getStatus());
-      ps.setDouble(5, calculateCustomerTotal(customerId));
+      ps.setDouble(5, order.calculateTotal());
 
       ps.executeUpdate();
 
-      System.out.println(
-          "[Order_" + order.getOrderId() + "] Inserted Successfully!");
+      // Process each order item
+      for (Product product : order.getItems()) {
 
-      insertOrderItems(order);
+        // Check stock
+        PreparedStatement checkStmt = conn.prepareStatement(checkStockSql);
 
-    } catch (SQLException e) {
+        checkStmt.setString(1, product.getProductId());
 
-      System.out.println("[ERROR] Insert Order Failed");
-      e.printStackTrace();
+        ResultSet rs = checkStmt.executeQuery();
+
+        if (rs.next()) {
+
+          int stock = rs.getInt("stock_quantity");
+
+          if (stock < product.getStockQuantity()) {
+            throw new Exception(
+                "Insufficient stock for product "
+                    + product.getProductId());
+          }
+
+          // Deduct stock
+          PreparedStatement updateStmt = conn.prepareStatement(updateStockSql);
+
+          updateStmt.setInt(1, 1);
+          updateStmt.setString(2, product.getProductId());
+
+          updateStmt.executeUpdate();
+        }
+
+        rs.close();
+        checkStmt.close();
+      }
+
+      // Insert order items
+      insertOrderItems(conn, order);
+
+      conn.commit();
+
+      System.out.println("[Order_" + order.getOrderId() + "] Added Successfully!");
 
     } catch (Exception e) {
 
-      System.out.println("[ERROR] Something Wrong?");
+      try {
+        if (conn != null)
+          conn.rollback();
+      } catch (SQLException ex) {
+        ex.printStackTrace();
+      }
+
+      e.printStackTrace();
+
+    } finally {
+
+      try {
+        if (conn != null) {
+          conn.setAutoCommit(true);
+          conn.close();
+        }
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
     }
   }
 
   // Insert order items
-  private void insertOrderItems(Order order) {
+  private void insertOrderItems(Connection conn, Order order) {
 
     String sql = "INSERT INTO order_items " +
         "(order_id, product_id, quantity) " +
         "VALUES (?, ?, ?)";
 
     try {
-
-      Connection conn = DBConnect.getConnection();
 
       PreparedStatement ps = conn.prepareStatement(sql);
 
@@ -210,17 +264,24 @@ public class OrderDAO {
 
   }
 
-  public double calculateCustomerTotal(String customerId) {
+  public double getCustomerTotalSpent(String customerId) {
 
     double total = 0;
 
-    String sql = "SELECT SUM(products.product_price * order_items.quantity) AS total " +
+    // String sql = "SELECT SUM(products.product_price * order_items.quantity) AS
+    // total " +
+    // "FROM orders " +
+    // "JOIN order_items " +
+    // "ON orders.order_id = order_items.order_id " +
+    // "JOIN products " +
+    // "ON order_items.product_id = products.product_id " +
+    // "WHERE orders.customer_id = ? " +
+    // "AND orders.status = ?";
+
+    String sql = "SELECT SUM(total_amount) AS total " +
         "FROM orders " +
-        "JOIN order_items " +
-        "ON orders.order_id = order_items.order_id " +
-        "JOIN products " +
-        "ON order_items.product_id = products.product_id " +
-        "WHERE orders.customer_id=?";
+        "WHERE customer_id = ? " +
+        "AND status = ?";
 
     try {
 
@@ -229,6 +290,7 @@ public class OrderDAO {
       PreparedStatement ps = conn.prepareStatement(sql);
 
       ps.setString(1, customerId);
+      ps.setString(2, "Pending");
 
       ResultSet rs = ps.executeQuery();
 
@@ -246,6 +308,35 @@ public class OrderDAO {
 
     return total;
 
+  }
+
+  public String getLatestPendingOrderId(String customerId) {
+
+    String sql = "SELECT order_id " +
+        "FROM orders " +
+        "WHERE customer_id = ? AND status = 'Pending' " +
+        "ORDER BY created_at DESC " +
+        "LIMIT 1";
+
+    try {
+
+      Connection conn = DBConnect.getConnection();
+
+      PreparedStatement ps = conn.prepareStatement(sql);
+
+      ps.setString(1, customerId);
+
+      ResultSet rs = ps.executeQuery();
+
+      if (rs.next()) {
+        return rs.getString("order_id");
+      }
+
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    return null;
   }
 
   // Update order status

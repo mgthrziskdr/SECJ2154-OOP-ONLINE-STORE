@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.Date;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 
 public class ProductDAO {
 
@@ -62,7 +63,7 @@ public class ProductDAO {
       System.out.println(
           "[Product_" +
               product.getProductId() +
-              "] Added Successfully");
+              "] Added Successfully!");
 
     } catch (Exception e) {
 
@@ -214,6 +215,27 @@ public class ProductDAO {
 
   }
 
+  public String[] getListOfProductId() {
+    String sql = "SELECT product_id FROM products";
+
+    ArrayList<String> productList = new ArrayList<>();
+
+    try {
+      Connection conn = DBConnect.getConnection();
+      PreparedStatement ps = conn.prepareStatement(sql);
+      ResultSet rs = ps.executeQuery();
+
+      while (rs.next()) {
+        productList.add(rs.getString("product_id"));
+      }
+
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    return productList.toArray(new String[0]);
+  }
+
   public String getProductType(String id) {
 
     String sql = "SELECT product_type FROM products WHERE product_id=?";
@@ -247,6 +269,41 @@ public class ProductDAO {
 
   }
 
+  public Product getProduct(String productId) {
+
+    String sql = "SELECT * FROM products WHERE product_id=?";
+
+    try {
+
+      Connection conn = DBConnect.getConnection();
+
+      PreparedStatement ps = conn.prepareStatement(sql);
+
+      ps.setString(1, productId);
+
+      ResultSet rs = ps.executeQuery();
+
+      if (rs.next()) {
+
+        return new Electronic(
+            rs.getString("product_id"),
+            rs.getString("product_name"),
+            rs.getDouble("product_price"),
+            rs.getInt("stock_quantity"),
+            0,
+            "");
+
+      }
+
+    } catch (SQLException e) {
+
+      e.printStackTrace();
+
+    }
+
+    return null;
+  }
+
   // Delete Product
   public void deleteProduct(String productId) {
 
@@ -256,6 +313,7 @@ public class ProductDAO {
 
       String[] tables = {
 
+          "order_items",
           "products_electronic",
           "products_clothing",
           "products_food",
@@ -279,7 +337,7 @@ public class ProductDAO {
       }
 
       System.out.println(
-          "[System] Product Deleted!");
+          "[Product_" + productId + "] Deleted Successfully!");
 
     } catch (SQLException e) {
 
@@ -298,49 +356,97 @@ public class ProductDAO {
   // Update Product
   public void updateProduct(Product product) {
 
-    String sql = "UPDATE products SET " +
-        "product_name=?, " +
-        "product_price=?, " +
-        "stock_quantity=?, " +
-        "updated_at=CURRENT_TIMESTAMP " +
-        "WHERE product_id=?";
+    String sql = "UPDATE products SET "
+        + "product_name=?, "
+        + "product_price=?, "
+        + "stock_quantity=?, "
+        + "updated_at=CURRENT_TIMESTAMP "
+        + "WHERE product_id=?";
 
     try {
 
       Connection conn = DBConnect.getConnection();
 
+      // Update products table
       PreparedStatement ps = conn.prepareStatement(sql);
 
-      ps.setString(
-          1,
-          product.getName());
-
-      ps.setDouble(
-          2,
-          product.getPrice());
-
-      ps.setInt(
-          3,
-          product.getStockQuantity());
-
-      ps.setString(
-          4,
-          product.getProductId());
+      ps.setString(1, product.getName());
+      ps.setDouble(2, product.getPrice());
+      ps.setInt(3, product.getStockQuantity());
+      ps.setString(4, product.getProductId());
 
       ps.executeUpdate();
 
-      System.out.println(
-          "[System] Product Updated!");
+      // Update subclass table
+      if (product instanceof Electronic) {
+
+        Electronic e = (Electronic) product;
+
+        String electronicSql = "UPDATE products_electronic "
+            + "SET brand=?, warranty_period=? "
+            + "WHERE product_id=?";
+
+        PreparedStatement eps = conn.prepareStatement(electronicSql);
+
+        eps.setString(1, e.getBrand());
+        eps.setInt(2, e.getWarrantyPeriod());
+        eps.setString(3, e.getProductId());
+
+        eps.executeUpdate();
+
+        eps.close();
+
+      } else if (product instanceof Clothing) {
+
+        Clothing c = (Clothing) product;
+
+        String clothingSql = "UPDATE products_clothing "
+            + "SET size=?, material=? "
+            + "WHERE product_id=?";
+
+        PreparedStatement cps = conn.prepareStatement(clothingSql);
+
+        cps.setString(1, c.getSize());
+        cps.setString(2, c.getMaterial());
+        cps.setString(3, c.getProductId());
+
+        cps.executeUpdate();
+
+        cps.close();
+
+      } else if (product instanceof Food) {
+
+        Food f = (Food) product;
+
+        String foodSql = "UPDATE products_food "
+            + "SET category=?, expiry_date=? "
+            + "WHERE product_id=?";
+
+        PreparedStatement fps = conn.prepareStatement(foodSql);
+
+        fps.setString(1, f.getCategory());
+        fps.setDate(2, java.sql.Date.valueOf(f.getExpiryDate()));
+        fps.setString(3, f.getProductId());
+
+        fps.executeUpdate();
+
+        fps.close();
+      }
+
+      ps.close();
+
+      System.out.println("[Product_" + product.getProductId() + "] Updated Successfully!");
 
     } catch (SQLException e) {
 
+      System.out.println("[ERROR] Update Product Failed");
       e.printStackTrace();
 
     } catch (Exception e) {
 
       System.out.println("[ERROR] Something Wrong?");
+      e.printStackTrace();
     }
-
   }
 
   // Check product exists
